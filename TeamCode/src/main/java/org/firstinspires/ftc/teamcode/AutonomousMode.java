@@ -29,15 +29,21 @@ public class AutonomousMode extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         if(opModeIsActive()){
-            ShapeDetectionUtils.pixels.clear();
             //adds telemetry
             telemetry.addData("Status", "Running");
             telemetry.update();
+
+            ShapeDetectionUtils.pixels.clear();
+            ShapeDetectionUtils.typePixels.clear();
+
+            while(!ShapeDetectionUtils.typePixels.containsKey("SPIKE_MARK")){
+                ShapeDetectionUtils.checkForPixels("SPIKE_MARK");
+            }
+            telemetry.log().add("Spike: (" + (ShapeDetectionUtils.typePixels.get("SPIKE_MARK").x + (ShapeDetectionUtils.typePixels.get("SPIKE_MARK").width/2)) + ", " + (ShapeDetectionUtils.typePixels.get("SPIKE_MARK").y+ (ShapeDetectionUtils.typePixels.get("SPIKE_MARK").height/2)) + ")");
         }
 
-        while (opModeIsActive()) {
-            ShapeDetectionUtils.checkForPixels();
-            telemetry.log().add(String.valueOf(ShapeDetectionUtils.pixels.toArray().length) + " Pixel(s) Detected");
+        while(opModeIsActive()){
+            //Main Code Loop
         }
     }
 
@@ -47,7 +53,6 @@ public class AutonomousMode extends LinearOpMode {
         OpenCvCamera camera = OpenCvCameraFactory.getInstance().createWebcam(webcamName);
         OpenCvPipeline pipeline = new ShapeDetectionUtils();
         camera.setPipeline(pipeline);
-
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
         {
             @Override
