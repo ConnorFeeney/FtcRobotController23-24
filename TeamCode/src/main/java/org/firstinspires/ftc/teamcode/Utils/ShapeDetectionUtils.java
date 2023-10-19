@@ -28,8 +28,10 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
 
     //Lists
     public static List<Rect> pixels = new ArrayList<>();
-    public static HashMap<String, Rect> typePixels = new HashMap<>();
     static List<MatOfPoint> filteredContours = new ArrayList<>();
+
+    //HashMaps
+    public static HashMap<String, Rect> typePixels = new HashMap<>();
 
     @Override
     public Mat processFrame(Mat input) {
@@ -39,7 +41,7 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
         Imgproc.GaussianBlur(input, processed, new Size(7, 7), 1);
         //Changes image to grayscale
         Imgproc.cvtColor(processed, processed, Imgproc.COLOR_RGB2GRAY);
-        //applies canny edge detection algorithm
+        //Applies canny edge detection algorithm
         Imgproc.Canny(processed, processed, 215, 30);
         //Dilates image to make sure-edges more visible and low threshold values less prominent
         Imgproc.dilate(processed, processed, new Mat(), new Point(-1, -1), 1);
@@ -47,14 +49,6 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
         originalFrame = input;
         lastResult = processed;
         return processed;
-    }
-
-    public static void checkForPixels(String type){
-        markContours(lastResult);
-
-        if(pixels.size() > 0){
-            classifyPixel(originalFrame, type);
-        }
     }
 
     public static void markContours(Mat input){
@@ -93,21 +87,27 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
     }
 
     public static void classifyPixel(Mat input, String type){
+        //Creates HashMap to store color of pixels
         HashMap<Rect, Integer> pixelColors = new HashMap<>();
+
+        //Converts image to Bitmap image
         Bitmap image = Bitmap.createBitmap(input.width(), input.height(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(input, image);
 
+        //Creates List for useless pixels
         List<Rect> pixelsToRemove = new ArrayList<>();
         for (Rect rect: pixels){
-            int[] imagePixels = new int[((int) ((double)rect.width * 0.57)) * ((int) ((double)rect.height * 0.29))];
+            //Grabs all pixels in bounding box of pixel detection -interference pixels
+            int[] imagePixels = new int[((int) ((double)rect.width)) * ((int) ((double)rect.height))];
             image.getPixels(imagePixels,
                             0,
-                            (int) ((double)rect.width * 0.57),
-                            (int) ((double)rect.x * 0.73),
+                            (int) ((double)rect.width),
+                            (int) ((double)rect.x),
                             rect.y,
-                            (int) ((double)rect.width * 0.57),
-                            (int) ((double)rect.height * 0.29));
+                            (int) ((double)rect.width),
+                            (int) ((double)rect.height));
 
+            //Stores each pixel of each color in a HashMap
             HashMap<Integer, Integer> colorCountMap = new HashMap<>();
             for(int imagePixel : imagePixels){
                 if(colorCountMap.containsKey(imagePixel)){
@@ -117,6 +117,7 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
                 }
             }
 
+            //Decides which color is found most often
             int dominantColor = 0;
             int maxCount = 0;
             for(Map.Entry<Integer, Integer> entry : colorCountMap.entrySet()){
@@ -129,20 +130,46 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
                 }
             }
 
+            //Sets RGB values
             int r = Color.red(dominantColor);
             int g = Color.green(dominantColor);
             int b = Color.blue(dominantColor);
 
-            if (r >= 230 && g >=230 && b>= 230 && (type == "SPIKE_MARK" | type == null)){
-                if(!typePixels.containsKey("SPIKE_MARK")){
-                    typePixels.put("SPIKE_MARK", rect);
-                }else if (type == "SPIKE_MARK"){
-                    pixelsToRemove.add(rect);
-                }
+            //Converts RGB to HSV
+            float HSV[] = new float[3];
+            Color.RGBToHSV(r, g, b, HSV);
+
+            //Checks Color
+            float deg = HSV[0];
+
+            boolean white = HSV[1] < 0.2 && HSV[2] > 0.8;
+            boolean black = HSV[2] < 0.1;
+
+            boolean purple = deg >= 240 && deg < 300 && !black && !white;
+            boolean green = deg >= 90 && deg < 150 && !black && !white;
+            boolean yellow = deg >= 30 && deg < 90 && !black && !white;
+
+            //Classify Pixels
+            if(white && !typePixels.containsKey("WHITE") && (type == "WHITE" || type == null)){
+                typePixels.put("WHITE", rect);
+            }else if(purple && !typePixels.containsKey("PURPLE") && (type == "PURPLE" || type == null)){
+                typePixels.put("PURPLE", rect);
+            }else if(green && !typePixels.containsKey("GREEN") && (type == "GREEN" || type == null)){
+                typePixels.put("GREEN", rect);
+            }else if(yellow && !typePixels.containsKey("YELLOW") && (type == "YELLOW" || type == null)){
+                typePixels.put("YELLOW", rect);
             }else{
                 pixelsToRemove.add(rect);
             }
         }
         pixels.removeAll(pixelsToRemove);
+    }
+
+    public static void checkForPixels(String type){
+        markContours(lastResult);
+
+        if(pixels.size() > 0){
+            classifyPixel(originalFrame, type);
+        }
     }
 }

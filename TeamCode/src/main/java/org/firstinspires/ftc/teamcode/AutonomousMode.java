@@ -35,11 +35,6 @@ public class AutonomousMode extends LinearOpMode {
 
             ShapeDetectionUtils.pixels.clear();
             ShapeDetectionUtils.typePixels.clear();
-
-            while(!ShapeDetectionUtils.typePixels.containsKey("SPIKE_MARK")){
-                ShapeDetectionUtils.checkForPixels("SPIKE_MARK");
-            }
-            telemetry.log().add("Spike: (" + (ShapeDetectionUtils.typePixels.get("SPIKE_MARK").x + (ShapeDetectionUtils.typePixels.get("SPIKE_MARK").width/2)) + ", " + (ShapeDetectionUtils.typePixels.get("SPIKE_MARK").y+ (ShapeDetectionUtils.typePixels.get("SPIKE_MARK").height/2)) + ")");
         }
 
         while(opModeIsActive()){
