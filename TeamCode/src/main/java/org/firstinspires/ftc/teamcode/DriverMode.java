@@ -62,8 +62,8 @@ public class DriverMode extends LinearOpMode {
                 rightMotorPower /= max;
             }
             //sets motor power
-            leftMotor.setPower(-leftMotorPower);
-            rightMotor.setPower(rightMotorPower);
+            leftMotor.setPower(-leftMotorPower/1.5);
+            rightMotor.setPower(rightMotorPower/1.5);
 
 
 
@@ -89,11 +89,18 @@ public class DriverMode extends LinearOpMode {
                 }
             }
 
+            if(gamepad1.dpad_up && mode == Mode.MANUAL){
+                arm.steadyUp(10);
+            }
+            if(gamepad1.dpad_down && mode == Mode.MANUAL){
+                arm.steadyDown(10);
+            }
+
             if(gamepad1.right_bumper && mode == Mode.MANUAL){
-                arm.steadyUp((1/360) * 1440);
+                arm.jointSteadyUp();
             }
             if(gamepad1.left_bumper && mode == Mode.MANUAL){
-                arm.steadyDown((1/360) * 1440);
+                arm.jointSteadyDown();
             }
 
             //Telemetry Updates
@@ -111,6 +118,11 @@ public class DriverMode extends LinearOpMode {
                 telemetry.addData("Claw Setting", "Opened");
             }else{
                 telemetry.addData("Claw Setting", "Closed");
+            }
+            if(mode == Mode.MANUAL){
+                telemetry.addData("Arm Setting", "Manual");
+            }else{
+                telemetry.addData("Arm Setting", "Automatic");
             }
 
             telemetry.update();

@@ -18,9 +18,9 @@ public class Arm implements Runnable{
     private double lastError;
     private double target;
 
-    public static double Kp = 0.12;
+    public static double Kp = 1.5;
     public static double Ki = 0.05;
-    public static double Kd = 0.1;
+    public static double Kd = 0.7;
 
     private Thread armThread;
 
@@ -87,17 +87,24 @@ public class Arm implements Runnable{
      * </pre>*/
     public void down(){
         //1440
-        this.target = 30;
-        this.wristServo.setPosition(1);
+        this.target = 25;
         this.jointServo.setPosition(0.92);
     }
 
     public void steadyDown(double dgr){
-        this.target -= dgr;
+        this.target = this.target - dgr;
     }
 
     public void steadyUp(double dgr){
-        this.target += dgr;
+        this.target = this.target + dgr;
+    }
+
+    public void jointSteadyDown(){
+        this.jointServo.setPosition(this.jointServo.getPosition() - 0.01);
+    }
+
+    public void jointSteadyUp(){
+        this.jointServo.setPosition(this.jointServo.getPosition() + 0.01);
     }
 
     /**<pre>
@@ -137,6 +144,7 @@ public class Arm implements Runnable{
         double derivative = (error - this.lastError) / this.time;
         this.integralSUM += (error * this.time);
         this.lastError = error;
+        this.lastReference = reference;
 
         double output = (Kp * error) + (Ki * integralSUM) + (Kd * derivative);
         return output;
