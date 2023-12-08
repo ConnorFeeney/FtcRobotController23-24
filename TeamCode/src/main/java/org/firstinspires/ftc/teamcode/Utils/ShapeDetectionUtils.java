@@ -87,9 +87,6 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
     }
 
     public static void classifyPixel(Mat input, String type){
-        //Creates HashMap to store color of pixels
-        HashMap<Rect, Integer> pixelColors = new HashMap<>();
-
         //Converts image to Bitmap image
         Bitmap image = Bitmap.createBitmap(input.width(), input.height(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(input, image);
