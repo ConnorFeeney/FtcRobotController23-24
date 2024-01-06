@@ -1,5 +1,6 @@
-package org.firstinspires.ftc.teamcode.Utils;
+package org.firstinspires.ftc.teamcode.Parts;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -47,6 +48,7 @@ public class Camera {
             camera.setPipeline(pipeline);
         }
         camera.startStreaming(x, y, OpenCvCameraRotation.UPRIGHT);
+        FtcDashboard.getInstance().startCameraStream(camera, 10);
     }
 
     public void stopStream(){

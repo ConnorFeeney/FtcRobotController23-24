@@ -9,9 +9,12 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Parts.Arm;
+import org.firstinspires.ftc.teamcode.Parts.Camera;
 
 import org.firstinspires.ftc.teamcode.Utils.ButtonToggle;
+import org.firstinspires.ftc.teamcode.Utils.PixelDetection;
 
 @TeleOp(name = "FTC Driver Mode (23-24)")
 public class DriverMode extends LinearOpMode {
@@ -24,22 +27,27 @@ public class DriverMode extends LinearOpMode {
         //Creates runtime timer
         ElapsedTime runtime = new ElapsedTime();
 
+        //Creates button toggle maps
+        ButtonToggle Xtoggle = new ButtonToggle();
+
         //Sets up all hardware
         DcMotor leftMotor = hardwareMap.get(DcMotor.class, "leftMotor");
         DcMotor rightMotor = hardwareMap.get(DcMotor.class, "rightMotor");
 
-        DcMotorEx armMotor = hardwareMap.get(DcMotorEx.class, "armMotor");
+        DcMotorEx armMotorLeft = hardwareMap.get(DcMotorEx.class, "armMotorLeft");
+        DcMotorEx armMotorRight = hardwareMap.get(DcMotorEx.class, "armMotorRight");
         Servo jointServo = hardwareMap.get(Servo.class, "jointServo");
         Servo wristServo = hardwareMap.get(Servo.class, "wristServo");
-        Arm arm = new Arm(wristServo, jointServo, armMotor);
-
-        ButtonToggle Xtoggle = new ButtonToggle();
+        Arm arm = new Arm(wristServo, jointServo, armMotorLeft, armMotorRight);
+        PixelDetection pipeline = new PixelDetection();
+        Camera camera = new Camera(hardwareMap.get(WebcamName.class, "camera"), pipeline, 1280, 720);
+        camera.init();
+        camera.startStream();
 
         //Initial telemetry status
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         Mode mode = Mode.AUTOMATIC;
-
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -51,8 +59,8 @@ public class DriverMode extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             //Calculates drive base motor power based on game-pad joystick positions
-            double axial = -gamepad1.left_stick_y;
-            double yawn = gamepad1.right_stick_x;
+            double axial = gamepad1.left_stick_y;
+            double yawn = -gamepad1.right_stick_x;
             double leftMotorPower = axial - yawn;
             double rightMotorPower = axial + yawn;
             //Clamps motor power to max at 1.00 to avoid locked up steering
@@ -66,7 +74,7 @@ public class DriverMode extends LinearOpMode {
             rightMotor.setPower(rightMotorPower/1.5);
 
 
-
+            //Game Pad Controls
             if(gamepad1.a){
                 arm.openClaw();
             }
@@ -90,10 +98,10 @@ public class DriverMode extends LinearOpMode {
             }
 
             if(gamepad1.dpad_up && mode == Mode.MANUAL){
-                arm.steadyUp(10);
+                arm.steadyUp(5);
             }
             if(gamepad1.dpad_down && mode == Mode.MANUAL){
-                arm.steadyDown(10);
+                arm.steadyDown(5);
             }
 
             if(gamepad1.right_bumper && mode == Mode.MANUAL){
@@ -128,7 +136,6 @@ public class DriverMode extends LinearOpMode {
             telemetry.update();
 
             //Stops arm thread when stop is pressed to prevent stuck in stop error
-
             if(!opModeIsActive()){
                 arm.stopArmThread();
             }

@@ -10,7 +10,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class Arm implements Runnable{
     private Servo wristServo;
     private Servo jointServo;
-    private DcMotorEx armMotor;
+    private DcMotorEx armMotorLeft;
+    private DcMotorEx armMotorRight;
 
     private double time;
     private double lastReference;
@@ -18,18 +19,19 @@ public class Arm implements Runnable{
     private double lastError;
     private double target;
 
-    public static double Kp = 1.5;
-    public static double Ki = 0.05;
-    public static double Kd = 0.7;
+    public static double Kp = 0.07;
+    public static double Ki = 0.1;
+    public static double Kd = 0.000001;
 
     private Thread armThread;
 
     boolean run;
-    public Arm(Servo wristServoIN, Servo jointServoIN, DcMotorEx armMotorIN){
+    public Arm(Servo wristServoIN, Servo jointServoIN, DcMotorEx armMotorLeftIN, DcMotorEx armMotorRightIN ){
         //Saves hardware
         this.wristServo = wristServoIN;
         this.jointServo = jointServoIN;
-        this.armMotor = armMotorIN;
+        this.armMotorLeft = armMotorLeftIN;
+        this.armMotorRight = armMotorRightIN;
 
         //Initializes variables
         this.lastReference = 0;
@@ -56,12 +58,16 @@ public class Arm implements Runnable{
         this.jointServo.scaleRange(0, 0.66);
 
         //resets encoders and prevents it from interfering with velocity
-        this.armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        this.armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        this.armMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        this.armMotorLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        this.armMotorLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        this.armMotorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        this.armMotorRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        this.armMotorRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //set initial arm position
-        this.target = 50;
+        this.target = 568;
         this.wristServo.setPosition(1);
         this.jointServo.setPosition(0.92);
 
@@ -87,8 +93,8 @@ public class Arm implements Runnable{
      * </pre>*/
     public void down(){
         //1440
-        this.target = 25;
-        this.jointServo.setPosition(0.92);
+        this.target = 30;
+        this.jointServo.setPosition(0.96);
     }
 
     public void steadyDown(double dgr){
@@ -140,13 +146,17 @@ public class Arm implements Runnable{
      *          state - current reading or "position" of the motors encoder
      * </pre>*/
     public double PIDController(double reference, double state){
-        double error = reference - state;
-        double derivative = (error - this.lastError) / this.time;
+        final double error = reference - state;
+        final double derivative = (error - this.lastError) / this.time;
         this.integralSUM += (error * this.time);
         this.lastError = error;
         this.lastReference = reference;
 
-        double output = (Kp * error) + (Ki * integralSUM) + (Kd * derivative);
+        if(this.lastReference != reference){
+            this.integralSUM = 0;
+        }
+
+        final double output = (Kp * error) + (Ki * integralSUM) + (Kd * derivative);
         return output;
     }
 
@@ -161,7 +171,8 @@ public class Arm implements Runnable{
      * </pre>*/
     public void update(double deltaTime){
         this.time = deltaTime;
-        armMotor.setPower(PIDController(this.target, this.armMotor.getCurrentPosition()));
+        armMotorLeft.setPower(PIDController(this.target, this.armMotorLeft.getCurrentPosition()));
+        armMotorRight.setPower(-armMotorLeft.getPower());
     }
 
     /**<pre>
@@ -175,7 +186,7 @@ public class Arm implements Runnable{
      *          the current reading of the encoder for the arms motor
      * </pre>*/
 
-    public double getArmPos(){return this.armMotor.getCurrentPosition();}
+    public double getArmPos(){return this.armMotorLeft.getCurrentPosition();}
 
     /**<pre>
      * double getWristPos()
@@ -219,7 +230,7 @@ public class Arm implements Runnable{
      * Returns:
      *          the current level of the motor, a value in the interval [0.0, 1.0]
      * </pre>*/
-    public double getArmPower(){return this.armMotor.getPower();}
+    public double getArmPower(){return this.armMotorLeft.getPower();}
 
     /**<pre>
      * void stopArmThread()
@@ -235,6 +246,6 @@ public class Arm implements Runnable{
             update(armTimer.seconds());
             armTimer.reset();
         }
-        armMotor.setPower(0);
+        armMotorLeft.setPower(0);
     }
 }

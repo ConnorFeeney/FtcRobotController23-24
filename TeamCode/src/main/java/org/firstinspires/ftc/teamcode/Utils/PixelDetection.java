@@ -20,7 +20,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ShapeDetectionUtils extends OpenCvPipeline {
+public class PixelDetection extends OpenCvPipeline {
+
+    //Enums
+    enum PixelType{WHITE, YELLOW, GREEN, PURPLE};
 
     //Mats
     static Mat lastResult;
@@ -31,7 +34,7 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
     static List<MatOfPoint> filteredContours = new ArrayList<>();
 
     //HashMaps
-    public static HashMap<String, Rect> typePixels = new HashMap<>();
+    public static HashMap<PixelType, Rect> classifiedPixels = new HashMap<>();
 
     @Override
     public Mat processFrame(Mat input) {
@@ -86,7 +89,7 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
         }
     }
 
-    public static void classifyPixel(Mat input, String type){
+    public static void classifyPixel(Mat input, PixelType type){
         //Converts image to Bitmap image
         Bitmap image = Bitmap.createBitmap(input.width(), input.height(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(input, image);
@@ -147,14 +150,14 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
             boolean yellow = deg >= 30 && deg < 90 && !black && !white;
 
             //Classify Pixels
-            if(white && !typePixels.containsKey("WHITE") && (type == "WHITE" || type == null)){
-                typePixels.put("WHITE", rect);
-            }else if(purple && !typePixels.containsKey("PURPLE") && (type == "PURPLE" || type == null)){
-                typePixels.put("PURPLE", rect);
-            }else if(green && !typePixels.containsKey("GREEN") && (type == "GREEN" || type == null)){
-                typePixels.put("GREEN", rect);
-            }else if(yellow && !typePixels.containsKey("YELLOW") && (type == "YELLOW" || type == null)){
-                typePixels.put("YELLOW", rect);
+            if(white && !classifiedPixels.containsKey(PixelType.WHITE) && (type == PixelType.WHITE || type == null)){
+                classifiedPixels.put(PixelType.WHITE, rect);
+            }else if(purple && !classifiedPixels.containsKey(PixelType.PURPLE) && (type == PixelType.PURPLE || type == null)){
+                classifiedPixels.put(PixelType.PURPLE, rect);
+            }else if(green && !classifiedPixels.containsKey(PixelType.GREEN) && (type == PixelType.GREEN || type == null)){
+                classifiedPixels.put(PixelType.GREEN, rect);
+            }else if(yellow && !classifiedPixels.containsKey(PixelType.YELLOW) && (type == PixelType.YELLOW || type == null)){
+                classifiedPixels.put(PixelType.YELLOW, rect);
             }else{
                 pixelsToRemove.add(rect);
             }
@@ -162,7 +165,7 @@ public class ShapeDetectionUtils extends OpenCvPipeline {
         pixels.removeAll(pixelsToRemove);
     }
 
-    public static void checkForPixels(String type){
+    public static void checkForPixels(PixelType type){
         markContours(lastResult);
 
         if(pixels.size() > 0){

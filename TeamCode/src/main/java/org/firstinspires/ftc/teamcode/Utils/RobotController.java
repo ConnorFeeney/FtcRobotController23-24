@@ -9,7 +9,7 @@ import org.opencv.core.Rect;
 
 import java.util.Date;
 
-public class autonomousRobotController {
+public class RobotController {
 
     //Distances
     public static double distance;
@@ -24,7 +24,7 @@ public class autonomousRobotController {
     private static DcMotor rightMotor;
     public static double currentBearing;
 
-    public autonomousRobotController(DcMotor leftMotorIN, DcMotor rightMotorIN){
+    public RobotController(DcMotor leftMotorIN, DcMotor rightMotorIN){
         leftMotor = leftMotorIN;
         rightMotor = rightMotorIN;
         currentBearing = 0;
@@ -99,7 +99,7 @@ public class autonomousRobotController {
     }
 
     public static void drive(double distanceToOBJmm){
-        final double RPM = 100* (64/32);
+        final double RPM = 100 * (64/32);
         final double wheelCircumference = 102 * Math.PI;
         final double deltaTime = distanceToOBJmm/(wheelCircumference * (RPM/60));
 
